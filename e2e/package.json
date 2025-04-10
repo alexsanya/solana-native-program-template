@@ -18,5 +18,9 @@
   "solana": {
     "wallet": "../program.json",
     "output": "../target/sbf-solana-solana/release/solana_program.so"
+  },
+  "dependencies": {
+    "crypto": "^1.0.1",
+    "merkletreejs": "^0.5.1"
   }
 }
