@@ -4,7 +4,7 @@ import { wait } from '../utils';
 import sk from '../../program.json';
 
 describe('Counter Program', () => {
-  const programId = new PublicKey("CQyo4S4D8QJHkrwrn4RwccrS29M41tfksqasA7xM9Pev");
+  const programId = new PublicKey("GVmtuAxPxMSSPEEo7Bgzt9RrvSXT7eyUmGtWZydubWkt");
   //const wallet = Keypair.generate();
   const wallet = Keypair.fromSecretKey(Uint8Array.from(sk));
   const port = process.env['RPC_PORT'];
@@ -72,7 +72,7 @@ describe('Counter Program', () => {
     });
 
     const instruction: Array<number> = Array.from({length: 65}).map(_ => 0);
-    instruction[32] = 1;
+    instruction[32] = 10;
 
     const addLeafInstruction = new TransactionInstruction({
       keys: [
