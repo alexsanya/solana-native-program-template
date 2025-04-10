@@ -30,21 +30,12 @@ module.exports = async function() {
 
   // Wait for RPC to be ready
   await waitForRpc();
-
-  // if Solana validator is ready, start logging
-  spawn('solana', ["logs"])
-  .stdout.on('data', (data: Buffer) => {
-    if (!fs.existsSync('./program.log')) {
-      fs.writeFileSync('./program.log', '');
-    }
-    
-    fs.appendFileSync('./program.log', data.toString());
-  });
 }
 
 async function waitForRpc(): Promise<boolean> {
   while (true) {
     if (await (validateRpc())) {
+      console.log("RPC validation success");
       return true;
     }
   }
