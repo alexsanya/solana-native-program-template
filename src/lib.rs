@@ -18,7 +18,12 @@ entrypoint!(process_instruction);
 #[repr(u32)]
 pub enum CustomError {
     InvalidLeafLength = 0,
-    TreeOverflow = 1
+    TreeOverflow = 1,
+    SignerAccountIsMissing = 2,
+    TreeAccountIsMissing = 3,
+    TreeDataAccessError = 4,
+    TreeSerrializationError = 5,
+    TreeDeserrizlizationError = 6
 }
 
 impl From<CustomError> for ProgramError {
@@ -38,11 +43,11 @@ pub struct MerkleTree {
 }
 
 impl MerkleTree {
-    pub fn insert_leaf(&mut self, leaf: [u8; 32]) -> ProgramResult {
+    pub fn insert_leaf(&mut self, leaf: [u8; 32]) -> Result<(), CustomError> {
         let leaf_pos = (1 << MAX_DEPTH) - 1 + self.next_leaf_index as usize;
         if leaf_pos >= TREE_SIZE {
             msg!("Tree is full");
-            return Err(CustomError::TreeOverflow.into());
+            return Err(CustomError::TreeOverflow);
         }
 
         self.nodes[leaf_pos] = leaf;
@@ -84,11 +89,13 @@ pub fn insert_leaf(
     instruction_data: &[u8],
 ) -> ProgramResult {
     let accounts_iter = &mut accounts.iter();
-    let _payer = next_account_info(accounts_iter)?;
-    let tree_account = next_account_info(accounts_iter)?;
+    let _payer = next_account_info(accounts_iter).map_err(|_| CustomError::SignerAccountIsMissing)?;
+    let tree_account = next_account_info(accounts_iter).map_err(|_| CustomError::TreeAccountIsMissing)?;
 
-    let mut tree_data = tree_account.try_borrow_mut_data()?;
-    let mut tree = MerkleTree::try_from_slice(&tree_data)?;
+    let mut tree_data = tree_account.try_borrow_mut_data()
+        .map_err(|_| CustomError::TreeDataAccessError)?;
+    let mut tree = MerkleTree::try_from_slice(&tree_data)
+        .map_err(|_| CustomError::TreeDeserrizlizationError)?;
 
     if instruction_data.len() != 32 {
         msg!("Invalid leaf length");
@@ -98,7 +105,7 @@ pub fn insert_leaf(
     let mut leaf = [0u8; 32];
     leaf.copy_from_slice(&instruction_data[..32]);
     tree.insert_leaf(leaf)?;
-    tree.serialize(&mut *tree_data)?;
+    tree.serialize(&mut *tree_data).map_err(|_| CustomError::TreeSerrializationError)?;
 
     msg!("Leaf inserted. Root: {}", hex::encode(tree.nodes[0]));
     Ok(())           
@@ -138,6 +145,6 @@ fn initialize_tree(
         &[&[b"tree", payer.key.as_ref(), &[bump]]],
     )?;
 
-    msg!("✅ Merkle Tree PDA initialized");
+    msg!("Merkle Tree PDA initialized");
     Ok(())
 }
