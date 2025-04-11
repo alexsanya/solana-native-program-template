@@ -83,6 +83,7 @@ pub fn insert_leaf(
     instruction_data: &[u8],
 ) -> ProgramResult {
     let accounts_iter = &mut accounts.iter();
+    let _payer = next_account_info(accounts_iter)?;
     let tree_account = next_account_info(accounts_iter)?;
 
     let mut tree_data = tree_account.try_borrow_mut_data()?;
