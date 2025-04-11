@@ -6,7 +6,7 @@ const crypto = require('crypto');
 const sha256 = (data: any) => crypto.createHash('sha256').update(data).digest();
 
 describe('Counter Program', () => {
-  const programId = new PublicKey("2Pmbu66cZVUY5HLwYQnWQq8y4CrdBti5PoyfYZKFcurb");
+  const programId = new PublicKey("5eGfNuEkFQjWLfN7zBGjgQnBWYHAJK9aGGf27hiJYXM1");
   //const wallet = Keypair.generate();
   const wallet = Keypair.fromSecretKey(Uint8Array.from(sk));
   const port = process.env['RPC_PORT'];

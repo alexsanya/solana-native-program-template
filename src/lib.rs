@@ -1,3 +1,5 @@
+use borsh::{BorshDeserialize, BorshSerialize};
+use borsh_derive::{BorshDeserialize, BorshSerialize};
 use solana_program::{
     account_info::{next_account_info, AccountInfo},
     entrypoint,
@@ -29,8 +31,7 @@ const MAX_DEPTH: usize = 3; // Tree with 8 leaves max
 const TREE_SIZE: usize = (1 << (MAX_DEPTH + 1)) - 1; // 15 nodes
 const TREE_SIZE_BYTES: usize = TREE_SIZE * 32 + 1; // bytes for all nodes + 1 byte for next_leaf_index
 
-// State: flat array of [u8; 32] hashes
-#[repr(C)]
+#[derive(BorshSerialize, BorshDeserialize)]
 pub struct MerkleTree {
     pub nodes: [[u8; 32]; TREE_SIZE],
     pub next_leaf_index: u8, // index of the next free leaf
@@ -87,7 +88,7 @@ pub fn insert_leaf(
     let tree_account = next_account_info(accounts_iter)?;
 
     let mut tree_data = tree_account.try_borrow_mut_data()?;
-    let tree: &mut MerkleTree = unsafe { &mut *(tree_data.as_mut_ptr() as *mut MerkleTree) };
+    let mut tree = MerkleTree::try_from_slice(&tree_data)?;
 
     if instruction_data.len() != 32 {
         msg!("Invalid leaf length");
@@ -97,6 +98,7 @@ pub fn insert_leaf(
     let mut leaf = [0u8; 32];
     leaf.copy_from_slice(&instruction_data[..32]);
     tree.insert_leaf(leaf)?;
+    tree.serialize(&mut *tree_data)?;
 
     msg!("Leaf inserted. Root: {}", hex::encode(tree.nodes[0]));
     Ok(())           
